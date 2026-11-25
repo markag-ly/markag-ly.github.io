@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>حساب — ماركاج Markag</title>
+  <meta name="description" content="حساب على ماركاج Markag — سوق ليبيا للبيع والشراء والمزادات.">
+  <meta property="og:title" content="حساب — ماركاج Markag">
+  <meta property="og:description" content="حساب على ماركاج Markag — سوق ليبيا للبيع والشراء والمزادات.">
+  <meta property="og:image" content="https://markag-ly.github.io/icon.png">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0D9E64" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="favicon.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .share { max-width: 440px; margin: 28px auto 40px; }
+    .share .box { background: var(--card); border-radius: 22px; box-shadow: var(--shadow); overflow: hidden; border: 1px solid var(--sep); }
+    .share .photo { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; background: var(--surface); display: block; }
+    .share .avatar { width: 104px; height: 104px; border-radius: 52px; object-fit: cover; background: var(--accent-soft); display: block; margin: 28px auto 0; }
+    .share .letter { width: 104px; height: 104px; border-radius: 52px; margin: 28px auto 0; display: flex; align-items: center; justify-content: center; font-size: 44px; font-weight: 700; color: var(--accent-ink); background: var(--accent); }
+    .share .body { padding: 18px 20px 22px; }
+    .share.seller .body { text-align: center; }
+    .share h1 { font-size: 22px; line-height: 1.5; margin: 0 0 6px; font-weight: 700; }
+    .share .price { font-size: 26px; font-weight: 700; margin: 0 0 4px; }
+    .share .muted { color: var(--text-2); font-size: 15px; margin: 0; }
+    .share .open { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 18px; min-height: 52px; border-radius: 15px;
+      background: var(--accent); color: var(--accent-ink); font-size: 17px; font-weight: 600; text-decoration: none; }
+    .share .hint { margin-top: 12px; text-align: center; color: var(--text-2); font-size: 14px; line-height: 1.7; }
+    .share .warn { margin-top: 12px; padding: 12px 14px; border-radius: 14px; background: var(--surface); color: var(--text-2); font-size: 14px; line-height: 1.7; display: none; }
+    .share .skeleton { height: 22px; border-radius: 8px; background: var(--surface); margin: 6px 0; }
+  </style>
+</head>
+<body>
+  <header class="bar">
+    <div class="wrap">
+      <a class="brand" href="./"><img src="icon.png" alt="" width="32" height="32">ماركاج</a>
+      <nav><a href="./">عن التطبيق</a></nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="share seller" id="share" data-kind="seller">
+      <div class="box">
+        <img class="avatar" id="avatar" alt="" style="display:none">
+        <div class="letter" id="letter"></div>
+        <div class="body">
+          <h1 id="title"><span class="skeleton" style="display:block;width:70%"></span></h1>
+          <p class="muted" id="sub" dir="ltr"></p>
+          <a class="open" id="open" href="#">افتح في تطبيق Markag</a>
+          <p class="warn" id="warn">يبدو أن تطبيق Markag غير مثبت على هذا الجهاز. التطبيق قريباً على Google Play.</p>
+          <p class="hint">يفتح الرابط صفحة الحساب مباشرة داخل التطبيق.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+  (function () {
+    // Public, read-only data (same anon key the app ships with). Text is set with textContent only.
+    var API = 'https://fgbkffjkuatxiklproft.supabase.co/rest/v1/';
+    var KEY = 'sb_publishable_sVVqVUSliQnStr5issjXgg_BkVbYzHb';
+    var PACKAGE = 'com.markag.app';
+    var kind = document.getElementById('share').getAttribute('data-kind');
+    var q = new URLSearchParams(location.search);
+    var id = (q.get('id') || '').trim().toLowerCase();
+    var valid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(id);
+    var path = kind + '/' + id;
+    var android = /android/i.test(navigator.userAgent);
+    var page = location.href.split('#')[0];
+    var fallback = page + (page.indexOf('?') >= 0 ? '&' : '?') + 'noapp=1';
+    // Android: an intent link opens the app, or comes back here with noapp=1 when it isn't installed.
+    var openUrl = android
+      ? 'intent://' + path + '#Intent;scheme=markag;package=' + PACKAGE + ';S.browser_fallback_url=' + encodeURIComponent(fallback) + ';end'
+      : 'markag://' + path;
+    var btn = document.getElementById('open');
+    var title = document.getElementById('title');
+    if (!valid) {
+      title.textContent = 'الرابط غير صحيح';
+      btn.style.display = 'none';
+      return;
+    }
+    btn.href = openUrl;
+    if (q.get('noapp')) document.getElementById('warn').style.display = 'block';
+    else setTimeout(function () { location.href = openUrl; }, 300);
+
+    function get(table, select) {
+      return fetch(API + table + '?select=' + select + '&id=eq.' + id, { headers: { apikey: KEY, Accept: 'application/json' } })
+        .then(function (r) { return r.ok ? r.json() : []; })
+        .then(function (rows) { return rows && rows[0]; })
+        .catch(function () { return null; });
+    }
+    function httpsUrl(u) { return typeof u === 'string' && /^https:\/\//.test(u) ? u : ''; }
+    function money(n) { return Number(n || 0).toLocaleString('en-US', { maximumFractionDigits: 3 }) + ' د.ل'; }
+
+    if (kind === 'listing') {
+      get('listings', 'title,title_ar,photos,listing_type,fixed_price,auction_current_bid,auction_start_price,status').then(function (l) {
+        if (!l) { title.textContent = 'إعلان على Markag'; return; }
+        var name = l.title_ar || l.title || 'إعلان على Markag';
+        title.textContent = name;
+        document.title = name + ' — ماركاج Markag';
+        var photo = httpsUrl(l.photos && l.photos[0]);
+        if (photo) document.getElementById('photo').src = photo;
+        var auction = l.listing_type === 'auction';
+        var p = auction ? (Number(l.auction_current_bid) || Number(l.auction_start_price)) : Number(l.fixed_price);
+        document.getElementById('price').textContent = money(p);
+        var sub = auction ? 'مزاد' : 'شراء فوري';
+        if (l.status === 'sold') sub = 'تم البيع';
+        else if (l.status && l.status !== 'active') sub = 'غير متاح حالياً';
+        document.getElementById('sub').textContent = sub;
+      });
+    } else {
+      get('profiles', 'name,name_ar,avatar,account_no').then(function (u) {
+        if (!u) { title.textContent = 'حساب على Markag'; return; }
+        var name = u.name_ar || u.name || 'حساب على Markag';
+        title.textContent = name;
+        document.title = name + ' — ماركاج Markag';
+        var av = httpsUrl(u.avatar);
+        var img = document.getElementById('avatar');
+        var letter = document.getElementById('letter');
+        if (av) { img.src = av; img.style.display = 'block'; letter.style.display = 'none'; }
+        else letter.textContent = name.charAt(0).toUpperCase();
+        document.getElementById('sub').textContent = u.account_no ? 'ID: ' + u.account_no : 'بائع على Markag';
+      });
+    }
+  })();
+  </script>
+</body>
+</html>
